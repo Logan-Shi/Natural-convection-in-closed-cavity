@@ -14,40 +14,26 @@
 % ## along with Octave; see the file COPYING.  If not, see
 % ## <http://www.gnu.org/licenses/>.
 
-% ## simple_globals
+% ## apply_pres_bc
 
-% ## Author: homu <homu@HOMU-PC>
-% ## Created: 2013-07-02
+% ## Author: logan-shi <loganshi@sjtu.edu.cn>
+% ## Created: 2020-06-07
 
-global nx ny;
-global Lx Ly;
-global dx dy;
-global dt;
+function [ phi ] = apply_theta_bc (phi)
 
-global visc rho alpha_heat lambda;
-global ULid;
-global Re;
+simple_globals;
 
-global urelax vrelax prelax Trelax;
+% homogeneous BC
+%x_low hot
+phi(1,1:ny+2) = T_H*ones(1,ny+2);
+phi(2,1:ny+2) = T_H*ones(1,ny+2);
+%x_high cold
+phi(nx+2,1:ny+2) = T_L*ones(1,ny+2);
+phi(nx+1,1:ny+2) = T_L*ones(1,ny+2);
+%y_low adiabatic
+phi(2:nx+1,1) = phi(2:nx+1,2);
+%y_high adiabatic
+phi(2:nx+1,ny+2) = phi(2:nx+1,ny+1);
 
-global T_H T_L;
-global Gry;
-% global umac vmac;
-% global ustar vstar;
-% global p pstar pdash;
-
-% global uold vold;
-% global pold;
-
-
-% pressure matrix
-% global Aw As Ap An Ae bp;
-
-% velocity matrix
-global AUp AVp;
-
-
-
-
-
-
+return
+end

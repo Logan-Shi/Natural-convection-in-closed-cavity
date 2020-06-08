@@ -19,7 +19,11 @@
 % ## Author: homu <homu@HOMU-PC>
 % ## Created: 2013-07-03
 
-function [ vstar ] = solve_vstar (umac,vmac,uold,vold,pstar)
+% ## Maintainer: Logan-Shi <loganshi@sjtu.edu.cn>
+% ## Modified: 2020-06-07
+% ## added gravity
+
+function [ vstar ] = solve_vstar (umac,vmac,uold,vold,pstar,T,T0)
 
 simple_globals;
 
@@ -58,7 +62,8 @@ avp = ave+avw+avn+avs + rho*dx*dy/dt;
 AVp(2:nx+1,2:ny) = avp(2:nx+1,2:ny);
 
 % RHS
-rhs(2:nx+1,2:ny) = -diff(pstar(2:nx+1,2:ny+1)')' * dx + ...
+Tp = (T(2:nx+1,2:ny)+T(2:nx+1,3:ny+1))/2;
+rhs(2:nx+1,2:ny) = rho*dx*dy*Gry*1/T0*(Tp-T_L)-diff(pstar(2:nx+1,2:ny+1)')' * dx + ...
     rho*dx*dy/dt * vold(2:nx+1,2:ny);
 % E
 rhs(nx+1,2:ny) = rhs(nx+1,2:ny) + ave(nx+1,2:ny) .* vmac(nx+2,2:ny);
