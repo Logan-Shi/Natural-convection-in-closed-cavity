@@ -9,4 +9,4 @@ given a cavity whose upper and lower boundaries are adiabatic, left and right bo
 
 # References
 
-	https://github.com/haloless/StupidCFD
+	[CFD](https://github.com/haloless/StupidCFD)
