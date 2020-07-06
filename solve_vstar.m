@@ -62,8 +62,8 @@ avp = ave+avw+avn+avs + rho*dx*dy/dt;
 AVp(2:nx+1,2:ny) = avp(2:nx+1,2:ny);
 
 % RHS
-Tp = (T(2:nx+1,2:ny)+T(2:nx+1,3:ny+1))/2;
-rhs(2:nx+1,2:ny) = rho*dx*dy*Gry*1/T0*(Tp-T_L)-diff(pstar(2:nx+1,2:ny+1)')' * dx + ...
+Tp = (T(1:nx,2:ny)+T(2:nx+1,2:ny))/2;
+rhs(2:nx+1,2:ny) = rho*dx*dy*Gry*1/T0*(Tp-T0)-diff(pstar(2:nx+1,2:ny+1)')' * dx + ...
     rho*dx*dy/dt * vold(2:nx+1,2:ny);
 % E
 rhs(nx+1,2:ny) = rhs(nx+1,2:ny) + ave(nx+1,2:ny) .* vmac(nx+2,2:ny);

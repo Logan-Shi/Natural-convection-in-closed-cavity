@@ -25,8 +25,9 @@ simple_globals;
 
 relax = Trelax;
 
-N = nx * ny;
-A = spalloc(N,N,5*N);
+SIZE = (nx-1) * (ny-1);
+A = spalloc(SIZE,SIZE,5*SIZE);
+% A = zeros(SIZE,SIZE);
 
 % vectorized version
 dte = alpha_heat * dy / dx;
@@ -34,24 +35,21 @@ dtw = alpha_heat * dy / dx;
 dtn = alpha_heat * dx / dy;
 dts = alpha_heat * dx / dy;
 
-fte = zeros(nx,ny);
-ftw = zeros(nx,ny);
-ftn = zeros(nx,ny);
-fts = zeros(nx,ny);
-fte(1:end-1,:) = dy * u(2:nx,:);
-ftw(2:end,:) = dy * u(1:nx-1,:);
-ftn(:,1:end-1) = dx * v(:,2:ny);
-fts(:,2:end) = dx * v(:,1:ny-1);
-
+fte = dy / 2 * (u(2:nx,1:ny-1)+u(2:nx,2:ny));
+ftw = dy / 2 * (u(1:nx-1,1:ny-1)+u(1:nx-1,2:ny));
+ftn = dx / 2 * (v(1:nx-1,2:ny)+v(2:nx,2:ny));
+fts = dx / 2 * (v(1:nx-1,1:ny-1)+v(2:nx,1:ny-1));
+%Ò»½×Ó­·çÊ½
 ate = dte + max(-fte,0);
 atw = dtw + max(ftw,0);
 atn = dtn + max(-ftn,0);
 ats = dts + max(fts,0);
-atp = ate+atw+atn+ats + rho*dx*dy/dt;
+atp = ate+atw+atn+ats+fte-ftw+ftn-fts+rho*dx*dy/dt;
 
 % RHS
-rhs = rho*dx*dy/dt * T(2:nx+1,2:ny+1)...
-    +(1-relax)/relax * atp .* T(2:nx+1,2:ny+1);
+% rhs = rho*dx*dy/dt * T(2:nx,2:ny)...
+%     +(1-relax)/relax * atp .* T(2:nx,2:ny);
+rhs = zeros(nx-1,ny-1);
 % % E
 % rhs(nx,:) = rhs(nx,:) + ate(nx,:) .* T(nx+1,2:ny+1);
 % ate(nx,:) = 0;
@@ -65,40 +63,26 @@ rhs = rho*dx*dy/dt * T(2:nx+1,2:ny+1)...
 % rhs(:,1) = rhs(:,1) + ats(:,1) .* T(2:nx+1,1);
 % ats(:,1) = 0;
 
-rhs = reshape(rhs, [N,1]);
-
 idx = 0;
-stride = nx;
-for j = 1:ny
-    for i = 1:nx
+for j = 2:ny
+    for i = 2:nx
         idx = idx + 1;
-        ide = idx + 1;
-        idw = idx - 1;
-        idn = idx + stride;
-        ids = idx - stride;
-        
-        if (j ~= 1)
-            A(idx,ids) = -ats(i,j);
-        end
-        if (i ~= 1)
-            A(idx,idw) = -atw(i,j);
-        end
-        if (i ~= nx)
-            A(idx,ide) = -ate(i,j);
-        end
-        if (j ~= ny)
-            A(idx,idn) = -atn(i,j);
-        end
-        A(idx,idx) = atp(i,j)/relax;
+
+        S = ats(i-1,j-1)*T(i,j-1);
+        W = atw(i-1,j-1)*T(i-1,j);
+        E = ate(i-1,j-1)*T(i+1,j);
+        N = atn(i-1,j-1)*T(i,j+1);
+        rhs(i-1,j-1) = S+W+E+N;
+        A(idx,idx) = atp(i-1,j-1);
     end
 end
 
-rhs = reshape(rhs,[N,1]);
+rhs = reshape(rhs,[SIZE,1]);
 
 % solve
 sol = A \ rhs;
-Tmp = reshape(sol,nx,ny);
-T(2:nx+1,2:ny+1) = Tmp;%flipud(rot90(Tmp));
+Tmp = reshape(sol,nx-1,ny-1);
+T(2:nx,2:ny) = Tmp;%flipud(rot90(Tmp));
 
 % u = blkdiag(0,u,0);
 % v = blkdiag(0,v,0);

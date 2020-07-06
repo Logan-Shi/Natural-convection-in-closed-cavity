@@ -29,18 +29,18 @@ simple_globals;
 Lx = 1;
 Ly = 1;
 % ncell = 40;
-ncell = 38;
+ncell = 70;
 nx = ncell;
 ny = ncell;
 dx = Lx / nx;
 dy = Ly / ny;
 
-relax = 0.8;
+relax = 0.5;
 urelax = relax;
 vrelax = relax;
-prelax = 1 - relax;
+prelax = 0.8;
 Trelax = 0.8;
-accuracy = 1e-4;
+accuracy = 4e-3;
 
 ULid = 0;
 rho = 1.165;   % density,kg/m^3
@@ -49,12 +49,12 @@ kvis = 16e-6; % kinematic viscosity,m^2/s
 T0 = 300; %K
 T_H = 320;
 T_L = 280;
-Gry = 9.81; %m/s^2
+Gry = 9.81e-6/3/1.19; %m/s^2
 alpha_heat = 22.9e-6;     % heat transmission coeffient,m^2/s
 lambda = 0.0267; % heat conduction,W/m/K
 
 % dt = 0.025 * Re * dx^2;
-% dt = 0.0001;
+% dt = 0.001;
 dt = Inf;
 
 % storage
@@ -65,7 +65,7 @@ vstar = zeros(nx+2,ny+1);
 p = zeros(nx+2,ny+2);
 pstar = zeros(nx+2,ny+2);
 pdash = zeros(nx+2,ny+2);
-T = zeros(nx+2,ny+2)+T_L;
+T = zeros(nx+1,ny+1)+T0;
 T = apply_theta_bc(T);
 
 umac = apply_umac_bc(umac);
@@ -84,10 +84,13 @@ Gr = Gry*1/T0*(T_H-T_L)*Ly^3/kvis/kvis;
 Ra = Gr*Pr;
 disp(['closed cavity, natural convection, Gr=', num2str(Gr)]);
 disp(['closed cavity, natural convection, Ra=', num2str(Ra)]);
-
+disp(['grid size: ' num2str(ncell) '*' num2str(ncell)])
+debug = 0;
 max_steps = 5000;
+hist_acc = 0;
+counter = 0;
 for istep = 1:max_steps
-    
+    close all;
     Told = T;
     uold = umac;
     vold = vmac;
@@ -101,20 +104,44 @@ for istep = 1:max_steps
     ucell = 0.5 * (umac(1:nx,2:ny+1) + umac(2:nx+1,2:ny+1));
     vcell = 0.5 * (vmac(2:nx+1,1:ny) + vmac(2:nx+1,2:ny+1));
 
+
     [T] = solve_temperature(ucell,vcell,T);
+    Tcell = (T(1:nx,1:ny)+T(1:nx,2:ny+1)+T(2:nx+1,1:ny)+T(2:nx+1,2:ny+1))/4;
     % compute intermeidate velocity
     
+    if debug
+    figure()
+    xcs = linspace(dx/2,Lx-dx/2,nx);
+    ycs = linspace(dy/2,Ly-dy/2,ny);
+    quiver(xcs, ycs, ucell', vcell',3);
+    title('Cell velocity');
+    xlabel('x');
+    ylabel('y');
+    axis equal;
+    axis([0 Lx 0 Ly]);
+    
+    figure()
+    [X,Y,Z] = griddata(xcs,ycs,flipud(rot90(Tcell)),xcs',ycs,'v4');
+    pcolor(X,Y,Z);
+    axis equal
+    axis([0 Lx 0 Ly]);
+    shading interp;
+    title('Temperature contour')
+    colorbar,colormap(jet)
+    end
+
     if (mod(istep,10) == 0)
         
         ucorr = umac - uold;
         vcorr = vmac - vold;
         Tcorr = T - Told;
         % pcorr = pstar - pold;
-        tol_abs = accuracy*norm(T,inf);
-        corr = norm(Tcorr,inf);
-        
+        tol_abs = accuracy*norm(umac,inf);
+        corr = norm(ucorr,inf);
+        counter = counter+1;
+        hist_acc(counter) = corr/tol_abs*accuracy;
         disp(['step=', int2str(istep), ...
-            ', corr=', num2str(corr)]);
+            ', corr=', num2str(hist_acc(counter))]);
         
         if (corr < tol_abs)
             break;
@@ -122,17 +149,18 @@ for istep = 1:max_steps
     end
 end
 
-figure;
-[hl,Nul,ql] = calc_heat_transfer(T);
-plot(hl,linspace(0,Ly,length(hl)));
-title('local heat convection coefficient on left wall');
-xlabel('y');
-ylabel('hl');
+close all;
 
 xcs = linspace(dx/2,Lx-dx/2,nx);
 ycs = linspace(dy/2,Ly-dy/2,ny);
 
 pcell = pstar(2:nx+1,2:ny+1);
+figure;
+[hl,Nul,ql] = calc_heat_transfer(Tcell);
+plot(ycs,Nul);
+title('local heat convection coefficient on left wall');
+xlabel('y');
+ylabel('hl');
 
 figure;
 quiver(xcs, ycs, ucell', vcell',3);
@@ -142,25 +170,25 @@ ylabel('y');
 axis equal;
 axis([0 Lx 0 Ly]);
 
-figure;
-contourf(xcs,ycs,pcell',20);
-xlabel('x');
-ylabel('y');
-axis equal;
-axis([0 Lx 0 Ly]);
-title("Pressure");
-
-psi = easy_streamfunc(xcs,ycs,nx,ny,dx,dy,ucell,vcell);
-figure;
-contour(xcs, ycs, psi', 80);
-xlabel('x');
-ylabel('y');
-title('stream-function');
-axis equal;
-axis([0 Lx 0 Ly]);
+% figure;
+% contourf(xcs,ycs,pcell',20);
+% xlabel('x');
+% ylabel('y');
+% axis equal;
+% axis([0 Lx 0 Ly]);
+% title("Pressure");
+% 
+% psi = easy_streamfunc(xcs,ycs,nx,ny,dx,dy,ucell,vcell);
+% figure;
+% contour(xcs, ycs, psi', 80);
+% xlabel('x');
+% ylabel('y');
+% title('stream-function');
+% axis equal;
+% axis([0 Lx 0 Ly]);
 
 figure()
-[X,Y,Z] = griddata(xcs,ycs,flipud(rot90(T(2:end-1,2:end-1))),xcs',ycs,'v4');
+[X,Y,Z] = griddata(xcs,ycs,flipud(rot90(Tcell)),xcs',ycs,'linear');
 pcolor(X,Y,Z);
 axis equal
 axis([0 Lx 0 Ly]);

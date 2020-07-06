@@ -25,15 +25,13 @@ simple_globals;
 
 % homogeneous BC
 %x_low hot
-phi(1,1:ny+2) = T_H*ones(1,ny+2);
-phi(2,1:ny+2) = T_H*ones(1,ny+2);
+phi(1,:) = T_H*ones(1,ny+1);
 %x_high cold
-phi(nx+2,1:ny+2) = T_L*ones(1,ny+2);
-phi(nx+1,1:ny+2) = T_L*ones(1,ny+2);
+phi(nx+1,:) = T_L*ones(1,ny+1);
 %y_low adiabatic
-phi(2:nx+1,1) = phi(2:nx+1,2);
+phi(2:nx,1) = phi(2:nx,2);
 %y_high adiabatic
-phi(2:nx+1,ny+2) = phi(2:nx+1,ny+1);
+phi(2:nx,ny+1) = phi(2:nx,ny);
 
 return
 end
