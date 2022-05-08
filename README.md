@@ -8,13 +8,13 @@ given a cavity whose upper and lower boundaries are adiabatic, left and right bo
  - plotdata.m for graph
 
 ## meshing diagram
-![figs1](figs/meshing diagram.png)
+![figs1](figs/3.png)
 
 ## Demo Result
 ### temperature distribution with different Ra
-![figs2](figs/temperature distribution with different Ra.png)
+![figs2](figs/2.png)
 ### stream functions with different Ra
-![figs3](figs/stream functions with different Ra.png)
+![figs3](figs/1.png)
 
 # References
 
