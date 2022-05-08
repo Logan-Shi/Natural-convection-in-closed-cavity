@@ -86,7 +86,7 @@ disp(['closed cavity, natural convection, Gr=', num2str(Gr)]);
 disp(['closed cavity, natural convection, Ra=', num2str(Ra)]);
 disp(['grid size: ' num2str(ncell) '*' num2str(ncell)])
 debug = 0;
-max_steps = 5000;
+max_steps = 500;
 hist_acc = 0;
 counter = 0;
 for istep = 1:max_steps
